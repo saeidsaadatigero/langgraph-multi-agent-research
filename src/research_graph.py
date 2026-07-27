@@ -27,23 +27,61 @@ from src.state import AgentState
 load_dotenv()
 
 
-# ── LLM Configuration ──────────────────────────────────────
+# ── LLM Configuration (Multi-Provider) ────────────────────
 
 def _create_llm():
-    """Factory function for LLM instance with validated configuration."""
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key or api_key == "sk-your-key-here":
-        raise ValueError(
-            "DEEPSEEK_API_KEY not configured. "
-            "Copy .env.example to .env and add your DeepSeek API key."
+    """
+    Factory function: Create LLM instance based on LLM_PROVIDER env var.
+    
+    Supported providers:
+    - deepseek: ChatDeepSeek (deepseek-chat model)
+    - openai: ChatOpenAI (gpt-4o-mini model, cost-effective default)
+    
+    Production Note: In a full production system, this factory would be
+    a proper Provider abstract class with implementations for each provider,
+    injected via dependency injection. This module-level singleton is
+    acceptable for the demo scope.
+    """
+    provider = os.getenv("LLM_PROVIDER", "deepseek").lower().strip()
+    
+    if provider == "deepseek":
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not api_key or api_key == "sk-your-key-here":
+            raise ValueError(
+                "DEEPSEEK_API_KEY not configured. "
+                "Set it in your .env file or switch LLM_PROVIDER to openai."
+            )
+        print("  🤖 Using DeepSeek (deepseek-chat)")
+        return ChatDeepSeek(
+            model="deepseek-chat",
+            api_key=api_key,
+            temperature=0.3,
         )
-    return ChatDeepSeek(
-        model="deepseek-chat",
-        api_key=api_key,
-        temperature=0.3,  # Low temp for factual, consistent outputs
-    )
+    
+    elif provider == "openai":
+        from langchain_openai import ChatOpenAI
+        
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key or api_key == "sk-your-key-here":
+            raise ValueError(
+                "OPENAI_API_KEY not configured. "
+                "Set it in your .env file or switch LLM_PROVIDER to deepseek."
+            )
+        print("  🤖 Using OpenAI (gpt-4o-mini)")
+        return ChatOpenAI(
+            model="gpt-4o-mini",  # Cost-effective, fast, good quality
+            api_key=api_key,
+            temperature=0.3,
+        )
+    
+    else:
+        raise ValueError(
+            f"Unknown LLM_PROVIDER: '{provider}'. "
+            "Supported providers: deepseek, openai"
+        )
 
 
+# Module-level instance (acceptable for demo; use factory injection in production)
 llm = _create_llm()
 
 
