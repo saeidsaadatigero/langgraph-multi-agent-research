@@ -1,3 +1,14 @@
+# Environment files
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
