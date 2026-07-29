@@ -1,0 +1,35 @@
+# docker-compose.yml
+# LangGraph Multi-Agent Research & Writing System
+# Docker Compose configuration for multi-service orchestration
+
+version: "3.9"
+
+services:
+  # ── Main Application ──────────────────────────────
+  research-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: langgraph-research:latest
+    container_name: langgraph-research-agent
+    # Interactive mode for CLI input
+    stdin_open: true
+    tty: true
+    # Environment variables (from .env file)
+    env_file:
+      - .env
+    # Mount source code for development (hot-reload)
+    volumes:
+      - ./src:/app/src:ro
+      - ./main.py:/app/main.py:ro
+    # Restart policy
+    restart: "no"
+    # Networks (prepared for future services)
+    networks:
+      - agent-network
+
+# ── Networks ────────────────────────────────────────
+networks:
+  agent-network:
+    driver: bridge
+    name: agent-network
